@@ -16,10 +16,10 @@
      limitations under the License.
 -->
 <resources>
-    <!-- Package Manager -->
-    <java-symbol type="array" name="config_disabledComponents" />
-    <java-symbol type="array" name="config_forceEnabledComponents" />
+  <!-- Package Manager -->
+  <java-symbol type="array" name="config_disabledComponents" />
 
-    <!-- Usb drive persistent notification -->
-    <java-symbol type="bool" name="config_persistUsbDriveNotification" />
+  <!-- System update service -->
+  <java-symbol type="array" name="config_forceEnabledComponents" />
+
 </resources>
