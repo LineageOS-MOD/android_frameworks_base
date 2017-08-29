@@ -3978,7 +3978,7 @@ message MetricsEvent {
     // END OF AOSP CONSTANTS
 
     //Extras
-    EXTRAS = 1000;
+    CUSTOM_SETTINGS = 1500;
 
   }
 }
