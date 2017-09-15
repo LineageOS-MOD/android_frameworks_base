@@ -528,6 +528,9 @@ public final class PowerManagerService extends SystemService
     // True if we are currently in device idle mode.
     private boolean mDeviceIdleMode;
 
+    // overrule and disable brightness for buttons
+    private boolean mHasHwKeysEnabled = false;
+
     // True if we are currently in light device idle mode.
     private boolean mLightDeviceIdleMode;
 
@@ -809,6 +812,15 @@ public final class PowerManagerService extends SystemService
         resolver.registerContentObserver(Settings.Secure.getUriFor(
                 Settings.Secure.DOUBLE_TAP_TO_WAKE),
                 false, mSettingsObserver, UserHandle.USER_ALL);
+        resolver.registerContentObserver(Settings.System.getUriFor(
+                Settings.System.BUTTON_BRIGHTNESS),
+                false, mSettingsObserver, UserHandle.USER_ALL);
+        resolver.registerContentObserver(Settings.System.getUriFor(
+                Settings.System.BUTTON_BACKLIGHT_TIMEOUT),
+                false, mSettingsObserver, UserHandle.USER_ALL);
+        resolver.registerContentObserver(Settings.System.getUriFor(
+                Settings.System.ENABLE_HW_KEYS),
+                false, mSettingsObserver, UserHandle.USER_ALL);
         IVrManager vrManager = (IVrManager) getBinderService(Context.VR_SERVICE);
         if (vrManager != null) {
             try {
@@ -953,6 +965,18 @@ public final class PowerManagerService extends SystemService
             mAutoLowPowerModeConfigured = autoLowPowerModeConfigured;
             updateLowPowerModeLocked();
         }
+
+        mButtonTimeout = Settings.System.getIntForUser(resolver,
+                Settings.System.BUTTON_BACKLIGHT_TIMEOUT,
+                DEFAULT_BUTTON_ON_DURATION, UserHandle.USER_CURRENT);
+
+        mButtonBrightness = Settings.System.getIntForUser(resolver,
+                Settings.System.BUTTON_BRIGHTNESS, mButtonBrightnessSettingDefault,
+                UserHandle.USER_CURRENT);
+
+        mHasHwKeysEnabled = Settings.System.getIntForUser(resolver,
+                Settings.System.ENABLE_HW_KEYS, 1,
+                UserHandle.USER_CURRENT) != 0;
 
         mDirty |= DIRTY_SETTINGS;
     }
@@ -1933,11 +1957,30 @@ public final class PowerManagerService extends SystemService
                     nextTimeout = mLastUserActivityTime
                             + screenOffTimeout - screenDimDuration;
                     if (now < nextTimeout) {
-                        if (now > mLastUserActivityTime + BUTTON_ON_DURATION) {
-                            mButtonsLight.setBrightness(0);
-                        } else {
-                            mButtonsLight.setBrightness(mDisplayPowerRequest.screenBrightness);
-                            nextTimeout = now + BUTTON_ON_DURATION;
+                        mUserActivitySummary = USER_ACTIVITY_SCREEN_BRIGHT;
+                        if (mWakefulness == WAKEFULNESS_AWAKE) {
+                            int buttonBrightness;
+                            if (!mHasHwKeysEnabled) {
+                                buttonBrightness = 0;
+                            } else {
+                                if (mButtonBrightnessOverrideFromWindowManager >= 0) {
+                                    buttonBrightness = mButtonBrightnessOverrideFromWindowManager;
+                                } else {
+                                    buttonBrightness = mButtonBrightness;
+                                }
+                            }
+
+                            if (mButtonTimeout != 0
+                                    && now > mLastUserActivityTime + mButtonTimeout) {
+                                mButtonsLight.setBrightness(0);
+                            } else {
+                                if (!mProximityPositive) {
+                                    mButtonsLight.setBrightness(buttonBrightness);
+                                    if (buttonBrightness != 0 && mButtonTimeout != 0) {
+                                        nextTimeout = now + mButtonTimeout;
+                                    }
+                                }
+                            }
                         }
                         mUserActivitySummary = USER_ACTIVITY_SCREEN_BRIGHT;
                     } else {
