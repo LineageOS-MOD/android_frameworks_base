@@ -2538,10 +2538,10 @@ public class PackageManagerService extends IPackageManager.Stub
             File frameworkDir = new File(Environment.getRootDirectory(), "framework");
 
             final VersionInfo ver = mSettings.getInternalVersion();
-            mIsUpgrade = !Build.FINGERPRINT.equals(ver.fingerprint);
+            mIsUpgrade = !Build.DATE.equals(ver.fingerprint);
             if (mIsUpgrade) {
                 logCriticalInfo(Log.INFO,
-                        "Upgrading from " + ver.fingerprint + " to " + Build.FINGERPRINT);
+                        "Upgrading from " + ver.fingerprint + " to " + Build.DATE);
             }
 
             // when upgrading from pre-M, promote system app permissions from install to runtime
@@ -2959,7 +2959,7 @@ public class PackageManagerService extends IPackageManager.Stub
                                         | Installer.FLAG_CLEAR_CODE_CACHE_ONLY);
                     }
                 }
-                ver.fingerprint = Build.FINGERPRINT;
+                ver.fingerprint = Build.DATE;
             }
 
             checkDefaultBrowser();
@@ -5847,7 +5847,11 @@ public class PackageManagerService extends IPackageManager.Stub
                 if (actionName.startsWith("android.net.netmon.lingerExpired")
                         || actionName.startsWith("com.android.server.sip.SipWakeupTimer")
                         || actionName.startsWith("com.android.internal.telephony.data-reconnect")
-                        || actionName.startsWith("android.net.netmon.launchCaptivePortalApp")) {
+                        || actionName.startsWith("android.net.netmon.launchCaptivePortalApp")
+                        || actionName.startsWith("eu.chainfire.supersu.NativeAccess")
+                        || actionName.startsWith("qualcomm.intent.action.ACTION_AUDIO_STATE_CHANGED")
+                        || actionName.startsWith("com.qualcomm.intent.action.ACTION_UNSOL_RESPONSE_OEM_HOOK_RAW")
+                        || actionName.startsWith("com.caf.fmradio.action.AUDIO_BECOMING_NOISY")) {
                     return true;
                 }
             }
@@ -22932,7 +22936,7 @@ Slog.v(TAG, ":: stepped forward, applying functor at tag " + parser.getName());
                     Slog.w(TAG, "Failed to scan " + ps.codePath + ": " + e.getMessage());
                 }
 
-                if (!Build.FINGERPRINT.equals(ver.fingerprint)) {
+                if (!Build.DATE.equals(ver.fingerprint)) {
                     clearAppDataLIF(ps.pkg, UserHandle.USER_ALL,
                             StorageManager.FLAG_STORAGE_DE | StorageManager.FLAG_STORAGE_CE
                                     | Installer.FLAG_CLEAR_CODE_CACHE_ONLY);
